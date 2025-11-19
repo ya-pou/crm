@@ -23,6 +23,15 @@ export class User {
   @IsNotEmpty()
   password: string;
 
+  @Column({
+    type: 'enum',
+    enum: ['ADMIN', 'MANAGER', 'USER'],
+    default: 'USER',
+    nullable: false,
+  })
+  @IsNotEmpty()
+  profil: string;
+
   @Column({ default: true, nullable: false })
   actif: boolean;
 }

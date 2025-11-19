@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
-import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { CustomersModule } from './customers/customers.module';
 import { OpportunitiesModule } from './opportunities/opportunities.module';
@@ -25,7 +24,6 @@ import configuration from './config/configuration';
       inject: [ConfigService],
     }),
     UsersModule,
-    RolesModule,
     PermissionsModule,
     CustomersModule,
     OpportunitiesModule,
