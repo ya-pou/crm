@@ -1,4 +1,5 @@
 import { Customer } from 'src/customers/entities/customer.entity';
+import { Opportunity } from 'src/opportunities/entities/opportunity.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
@@ -28,6 +29,9 @@ export class User {
 
   @OneToMany(() => Customer, (customer) => customer.user)
   customers: Customer[];
+
+  @OneToMany(() => Opportunity, (opp) => opp.user)
+  opportunities: Opportunity[];
 
   @Column({ default: true, nullable: false })
   actif: boolean;

@@ -1,26 +1,108 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Customer } from 'src/customers/entities/customer.entity';
+import { User } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { Opportunity } from './entities/opportunity.entity';
 
 @Injectable()
 export class OpportunitiesService {
-  create(createOpportunityDto: CreateOpportunityDto) {
-    return 'This action adds a new opportunity';
+  constructor(
+    @InjectRepository(Opportunity)
+    private readonly opportunityRepo: Repository<Opportunity>,
+
+    @InjectRepository(Customer)
+    private readonly customerRepo: Repository<Customer>,
+
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
+
+  async create(dto: CreateOpportunityDto): Promise<Opportunity> {
+    const opp = this.opportunityRepo.create(dto);
+
+    // Relation Customer
+    if (dto.customerId) {
+      const customer = await this.customerRepo.findOne({
+        where: { id: dto.customerId },
+      });
+      if (!customer)
+        throw new BadRequestException(`Customer ${dto.customerId} not found`);
+      opp.customer = customer;
+    }
+
+    // Relation User
+    if (dto.userId) {
+      const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+      if (!user) throw new BadRequestException(`User ${dto.userId} not found`);
+      opp.user = user;
+    }
+
+    return this.opportunityRepo.save(opp);
   }
 
-  findAll() {
-    return `This action returns all opportunities`;
+  findAll(): Promise<Opportunity[]> {
+    return this.opportunityRepo.find({
+      relations: ['customer', 'user'],
+      order: { id: 'DESC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} opportunity`;
+  async findOne(id: number): Promise<Opportunity> {
+    const opp = await this.opportunityRepo.findOne({
+      where: { id },
+      relations: ['customer', 'user'],
+    });
+
+    if (!opp) throw new NotFoundException(`Opportunity ${id} not found`);
+
+    return opp;
   }
 
-  update(id: number, updateOpportunityDto: UpdateOpportunityDto) {
-    return `This action updates a #${id} opportunity`;
+  async update(id: number, dto: UpdateOpportunityDto): Promise<Opportunity> {
+    const opp = await this.findOne(id);
+
+    // Customer
+    if (dto.customerId !== undefined) {
+      if (dto.customerId === null) {
+        opp.customer = null;
+        opp.customerId = null;
+      } else {
+        const customer = await this.customerRepo.findOne({
+          where: { id: dto.customerId },
+        });
+        if (!customer)
+          throw new BadRequestException(`Customer ${dto.customerId} not found`);
+        opp.customer = customer;
+      }
+    }
+
+    // User
+    if (dto.userId !== undefined) {
+      if (dto.userId === null) {
+        opp.user = null;
+        opp.userId = null;
+      } else {
+        const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+        if (!user)
+          throw new BadRequestException(`User ${dto.userId} not found`);
+        opp.user = user;
+      }
+    }
+
+    Object.assign(opp, dto);
+
+    return this.opportunityRepo.save(opp);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} opportunity`;
+  async remove(id: number): Promise<void> {
+    const opp = await this.findOne(id);
+    await this.opportunityRepo.remove(opp);
   }
 }

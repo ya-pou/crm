@@ -1,9 +1,11 @@
+import { Opportunity } from 'src/opportunities/entities/opportunity.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -33,4 +35,7 @@ export class Customer {
 
   @Column({ nullable: true })
   userId: number;
+
+  @OneToMany(() => Opportunity, (opp) => opp.customer)
+  opportunities: Opportunity[];
 }
