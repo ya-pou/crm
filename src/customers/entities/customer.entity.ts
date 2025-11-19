@@ -1,1 +1,36 @@
-export class Customer {}
+import { User } from 'src/users/entities/user.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+@Entity('customers')
+export class Customer {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ length: 255, nullable: false })
+  name: string;
+
+  @Column({ unique: true, nullable: false })
+  email: string;
+
+  @Column({ nullable: true, type: 'varchar', length: 20, unique: true })
+  telephone?: string;
+
+  @Column({ nullable: true, type: 'varchar', length: 20, unique: true })
+  sector?: string;
+
+  @Column({ nullable: true })
+  status?: string;
+
+  @ManyToOne(() => User, (user) => user.customers, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column({ nullable: true })
+  userId: number;
+}
