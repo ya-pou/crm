@@ -1,5 +1,5 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Customer } from 'src/customers/entities/customer.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -7,20 +7,15 @@ export class User {
   id: number;
 
   @Column({ length: 255, nullable: false })
-  @IsNotEmpty()
   lastName: string;
 
   @Column({ length: 255, nullable: false })
-  @IsNotEmpty()
   name: string;
 
   @Column({ unique: true, nullable: false })
-  @IsEmail()
-  @IsNotEmpty()
   email: string;
 
   @Column({ length: 255, nullable: false })
-  @IsNotEmpty()
   password: string;
 
   @Column({
@@ -29,8 +24,10 @@ export class User {
     default: 'USER',
     nullable: false,
   })
-  @IsNotEmpty()
   profil: string;
+
+  @OneToMany(() => Customer, (customer) => customer.user)
+  customers: Customer[];
 
   @Column({ default: true, nullable: false })
   actif: boolean;
