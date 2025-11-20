@@ -8,6 +8,7 @@ import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -29,6 +30,9 @@ import configuration from './config/configuration';
     OpportunitiesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: 'APP_GUARD', useClass: JwtAuthGuard }, //Permet de bloquer toutes les routes
+  ],
 })
 export class AppModule {}
