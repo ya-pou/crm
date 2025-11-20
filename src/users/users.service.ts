@@ -28,12 +28,14 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return user;
+    return user ?? null;
+  }
+
+  async findOneByMail(email: string): Promise<User | null> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    return user ?? null;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {

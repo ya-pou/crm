@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { CustomersModule } from './customers/customers.module';
 import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -22,6 +23,7 @@ import configuration from './config/configuration';
       },
       inject: [ConfigService],
     }),
+    AuthModule,
     UsersModule,
     CustomersModule,
     OpportunitiesModule,
