@@ -1,15 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -28,8 +34,14 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User | null> {
+  async findOne(id: number, currentUser: User): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { id } });
+    console.log(currentUser);
+    const ability = this.caslAbilityFactory.createForUser(currentUser);
+
+    if (!ability.can(Action.Read, user)) {
+      throw new ForbiddenException('You cannot read this user.');
+    }
     return user ?? null;
   }
 
@@ -39,7 +51,8 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.findOne(id); // Vérifie si l'utilisateur existe
+    const user = null;
+    // const user = await this.findOne(id); // Vérifie si l'utilisateur existe
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
