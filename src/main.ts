@@ -9,7 +9,18 @@ async function bootstrap() {
     .setTitle('WMS CRM API')
     .setDescription('A light CRM develop by WMS')
     .setVersion('1.0')
-    .addTag('crm')
+    .addTag('CRM Light WMS')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT-auth',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // 👈 DOIT matcher ton @ApiBearerAuth('JWT-auth')
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
