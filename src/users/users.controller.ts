@@ -24,8 +24,9 @@ export class UsersController {
 
   @CheckAbilities({ action: Action.Create, subject: User })
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @CurrentUser() payload) {
+    console.log(payload);
+    return this.usersService.create(createUserDto, payload);
   }
 
   @CheckAbilities({ action: Action.Read, subject: User })
@@ -36,17 +37,18 @@ export class UsersController {
 
   @CheckAbilities({ action: Action.Read, subject: User })
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() currentUser) {
-    return this.usersService.findOne(+id, currentUser);
+  findOne(@Param('id') id: string, @CurrentUser() payload) {
+    console.log(payload);
+    return this.usersService.findOne(+id, payload);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @CurrentUser() currentUser,
+    @CurrentUser() payload,
   ) {
-    return this.usersService.update(+id, updateUserDto, currentUser);
+    return this.usersService.update(+id, updateUserDto, payload);
   }
 
   @Delete(':id')
