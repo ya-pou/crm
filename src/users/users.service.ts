@@ -34,9 +34,9 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
-  async findOne(id: number, currentUser: User): Promise<User | null> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    console.log(currentUser);
+  async findOne(id: number, currentUserPayload: User): Promise<User | null> {
+    const currentUser = await this.getCurrent(currentUserPayload);
+    const user = await this.getCurrent(currentUserPayload);
     const ability = this.caslAbilityFactory.createForUser(currentUser);
 
     if (!ability.can(Action.Read, user)) {
@@ -50,9 +50,17 @@ export class UsersService {
     return user ?? null;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = null;
-    // const user = await this.findOne(id); // Vérifie si l'utilisateur existe
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    currentUserPayload: any,
+  ) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    const currentUser = await this.getCurrent(currentUserPayload);
+    const ability = this.caslAbilityFactory.createForUser(currentUser);
+    if (!ability.can(Action.Update, user)) {
+      throw new ForbiddenException('You cannot read this user.');
+    }
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -65,5 +73,12 @@ export class UsersService {
     if (result.affected === 0) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+  }
+
+  private async getCurrent(user) {
+    return await this.userRepository.findOne({
+      where: { id: user.sub },
+      select: { id: true, profil: true },
+    });
   }
 }
