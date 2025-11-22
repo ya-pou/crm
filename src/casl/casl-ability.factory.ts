@@ -46,12 +46,10 @@ export class CaslAbilityFactory {
     // MANAGER
     //
     if (user.profil === Role.MANAGER) {
-      // Peut gérer ses propres informations
       can(Action.Read, User, { id: user.id });
       can(Action.Update, User, { id: user.id });
+      can(Action.Create, User);
 
-      // Placeholder — à implémenter plus tard
-      // eslint-disable-next-line
       can(Action.Manage, User, { managerId: user.id });
       return build({
         detectSubjectType: (item) =>
@@ -69,13 +67,9 @@ export class CaslAbilityFactory {
       can(Action.Read, User, { id: user.id });
       can(Action.Update, User, { id: user.id });
       cannot(Action.Create, User);
-      // Placeholder : pourra lire les users gérés par le même manager
-      // eslint-disable-next-line
-      // can(Action.Read, User, { managerId: user.managerId });
 
-      // Idem : il pourra lire son manager
-      // eslint-disable-next-line
-      // can(Action.Read, User, { id: user.managerId });
+      can(Action.Read, User, { managerId: user.managerId });
+      can(Action.Read, User, { id: user.managerId });
 
       return build({
         detectSubjectType: (item) =>
