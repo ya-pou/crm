@@ -13,7 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 import { Role } from 'src/roles/roles.guard';
 import { Payload } from 'src/auth/auth.service';
-
+//TODO: Gestion du flag actif
 @Injectable()
 export class UsersService {
   constructor(
@@ -46,58 +46,14 @@ export class UsersService {
     return await this.userRepository.save(newUser);
   }
 
-  async findAll(payload: Payload) {
-    const currentUser = await this.getCurrent(payload);
-    const ability = this.caslAbilityFactory.createForUser(currentUser);
-
-    let users: User[] = [];
-
-    // ADMIN → tout
-    if (currentUser.profil === Role.ADMIN) {
-      users = await this.userRepository.find();
-    }
-
-    // MANAGER → ses users
-    else if (currentUser.profil === Role.MANAGER) {
-      users = await this.userRepository.find({
-        where: [{ managerId: currentUser.id }, { id: currentUser.id }],
-      });
-    }
-
-    // USER → ses collègues (même manager) et son manager
-    else if (currentUser.profil === Role.USER) {
-      if (!currentUser.managerId) {
-        users = [currentUser]; // fallback
-      } else {
-        users = await this.userRepository.find({
-          where: [
-            { managerId: currentUser.managerId, actif: true },
-            { id: currentUser.managerId, actif: true },
-          ],
-        });
-      }
-    }
-
-    // Validation CASL élément par élément
-    return users.filter((user) => ability.can(Action.Read, user));
+  async findAll() {
+    return await this.userRepository.find();
   }
 
-  async findOne(id: number, payload: Payload): Promise<User | null> {
-    const currentUser = await this.getCurrent(payload);
+  async findOne(id: number): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException();
-
-    const ability = this.caslAbilityFactory.createForUser(currentUser);
-
-    if (ability.can(Action.Read, user)) return user;
-    if (
-      currentUser.profil === Role.MANAGER &&
-      this.isManagerOf(currentUser, user)
-    ) {
-      return user;
-    }
-
-    throw new UnauthorizedException();
+    return user;
   }
 
   async findOneByMail(email: string): Promise<User | null> {
@@ -126,7 +82,7 @@ export class UsersService {
     }
   }
 
-  private async getCurrent(user) {
+  async getCurrent(user) {
     const current = await this.userRepository.findOne({
       where: { id: user.id },
       select: { id: true, profil: true, managerId: true },

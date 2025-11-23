@@ -33,17 +33,14 @@ export class UsersController {
     return this.usersService.create(createUserDto, payload);
   }
 
-  @CheckAbilities({ action: Action.Read, subject: User })
   @Get()
-  findAll(@CurrentUser() payload) {
-    return this.usersService.findAll(payload);
+  findAll() {
+    return this.usersService.findAll();
   }
 
-  @CheckAbilities({ action: Action.Read, subject: User })
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() payload) {
-    console.log(payload);
-    return this.usersService.findOne(+id, payload);
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(+id);
   }
 
   @Patch(':id')

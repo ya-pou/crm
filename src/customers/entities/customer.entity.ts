@@ -23,7 +23,7 @@ export class Customer {
   @Column({ nullable: true, type: 'varchar', length: 20, unique: true })
   telephone?: string;
 
-  @Column({ nullable: true, type: 'varchar', length: 20, unique: true })
+  @Column({ nullable: true, type: 'varchar', length: 20 })
   sector?: string;
 
   @Column({ nullable: true })

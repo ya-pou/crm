@@ -1,7 +1,7 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +10,9 @@ import { Customer } from './entities/customer.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { Payload } from 'src/auth/auth.service';
+import { UsersService } from 'src/users/users.service';
+import { Role } from 'src/roles/roles.guard';
 
 @Injectable()
 export class CustomersService {
@@ -19,24 +22,55 @@ export class CustomersService {
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly userService: UsersService,
   ) {}
 
-  async create(dto: CreateCustomerDto): Promise<Customer> {
-    const customer = this.customerRepo.create(dto);
+  async create(dto: CreateCustomerDto, payload: Payload): Promise<Customer> {
+    const currentUser = await this.userService.getCurrent(payload);
+    if (currentUser.profil === Role.ADMIN) {
+      const newCustomer = this.customerRepo.create({
+        ...dto,
+        userId: dto.userId ?? null, // admin peut assigner ou non
+      });
 
-    if (dto.userId) {
-      const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+      return await this.customerRepo.save(newCustomer);
+    } else if (currentUser.profil === Role.MANAGER) {
+      let ownerId = dto.userId;
 
-      if (!user) {
-        throw new BadRequestException(
-          `User with ID ${dto.userId} does not exist`,
+      // Si pas d'owner défini → par défaut le manager lui-même
+      if (!ownerId) ownerId = currentUser.id;
+
+      // Vérifier que ownerId existe
+      const owner = await this.userService.findOne(ownerId);
+      if (!owner) {
+        throw new NotFoundException(`User with id ${ownerId} not found`);
+      }
+
+      // Vérifier que owner appartient à l'équipe du manager
+      if (owner.id !== currentUser.id && owner.managerId !== currentUser.id) {
+        throw new ForbiddenException(
+          `You cannot assign this customer to user ${owner.id}. This user is not in your team.`,
         );
       }
 
-      customer.user = user;
+      const newCustomer = this.customerRepo.create({
+        ...dto,
+        userId: owner.id,
+      });
+
+      return await this.customerRepo.save(newCustomer);
+    } else if (currentUser.profil === Role.USER) {
+      const newCustomer = this.customerRepo.create({
+        ...dto,
+        userId: currentUser.id, // force owner
+      });
+
+      return await this.customerRepo.save(newCustomer);
     }
 
-    return this.customerRepo.save(customer);
+    throw new ForbiddenException(
+      "You don't have permission to create customers.",
+    );
   }
 
   findAll(): Promise<Customer[]> {
@@ -59,30 +93,108 @@ export class CustomersService {
     return customer;
   }
 
-  async update(id: number, dto: UpdateCustomerDto): Promise<Customer> {
-    const customer = await this.findOne(id);
+  async update(
+    id: number,
+    dto: UpdateCustomerDto,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    payload: Payload,
+  ): Promise<Customer> {
+    // 1. Récupérer user courant
+    const currentUser = await this.userService.getCurrent(payload);
 
-    // Si userId est modifié
-    if (dto.userId !== undefined) {
-      if (dto.userId === null) {
-        customer.user = null;
-        customer.userId = null;
-      } else {
-        const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+    // 2. Charger le customer existant avec owner
+    const customer = await this.customerRepo.findOne({
+      where: { id },
+      relations: ['user'], // pour savoir qui est l’owner actuel
+    });
 
-        if (!user) {
-          throw new BadRequestException(
-            `User with ID ${dto.userId} not exists`,
-          );
-        }
-
-        customer.user = user;
-      }
+    if (!customer) {
+      throw new NotFoundException(`Customer with id ${id} not found`);
     }
 
-    Object.assign(customer, dto);
+    // --- ADMIN ---
+    if (currentUser.profil === Role.ADMIN) {
+      // ADMIN fait ce qu'il veut
+      const newOwnerId = dto.userId ?? customer.userId;
 
-    return this.customerRepo.save(customer);
+      // Vérifier que l'owner existe si fourni
+      if (dto.userId) {
+        const newOwner = await this.userService.findOne(dto.userId);
+        if (!newOwner) {
+          throw new NotFoundException(`User with id ${dto.userId} not found`);
+        }
+      }
+
+      const updated = this.customerRepo.merge(customer, {
+        ...dto,
+        userId: newOwnerId,
+      });
+
+      return await this.customerRepo.save(updated);
+    }
+
+    // --- MANAGER ---
+    if (currentUser.profil === Role.MANAGER) {
+      // 1. Le manager peut modifier seulement les customers :
+      //    - dont il est owner
+      //    - ou appartenant à un membre de son équipe
+      const isHisCustomer =
+        customer.userId === currentUser.id ||
+        customer.user?.managerId === currentUser.id;
+
+      if (!isHisCustomer) {
+        throw new ForbiddenException(
+          `You cannot update this customer: not in your team.`,
+        );
+      }
+
+      // 2. Si le manager change l’owner : vérifier la nouvelle cible
+      const newOwnerId = dto.userId ?? customer.userId;
+
+      if (dto.userId) {
+        const newOwner = await this.userService.findOne(dto.userId);
+        if (!newOwner) {
+          throw new NotFoundException(`User with id ${dto.userId} not found`);
+        }
+
+        const isEligible =
+          newOwner.id === currentUser.id ||
+          newOwner.managerId === currentUser.id;
+
+        if (!isEligible) {
+          throw new ForbiddenException(
+            `You cannot assign customer to user ${newOwner.id}: not in your team.`,
+          );
+        }
+      }
+
+      const updated = this.customerRepo.merge(customer, {
+        ...dto,
+        userId: newOwnerId,
+      });
+
+      return await this.customerRepo.save(updated);
+    }
+
+    // --- USER ---
+    if (currentUser.profil === Role.USER) {
+      // User peut modifier seulement ses customers
+      if (customer.userId !== currentUser.id) {
+        throw new ForbiddenException(
+          `You cannot update this customer: you are not the owner.`,
+        );
+      }
+
+      // Un user ne peut PAS changer l’owner
+      const updated = this.customerRepo.merge(customer, {
+        ...dto,
+        userId: currentUser.id, // owner ne change pas
+      });
+
+      return await this.customerRepo.save(updated);
+    }
+
+    throw new ForbiddenException('You do not have rights to update customers.');
   }
 
   async remove(id: number): Promise<void> {
