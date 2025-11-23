@@ -91,7 +91,7 @@ export class UsersService {
     return current;
   }
 
-  private isManagerOf(manager: User, user: User): boolean {
+  isManagerOf(manager: User, user: User): boolean {
     return user.managerId === manager.id;
   }
 }

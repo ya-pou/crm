@@ -99,7 +99,6 @@ export class CustomersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     payload: Payload,
   ): Promise<Customer> {
-    // 1. Récupérer user courant
     const currentUser = await this.userService.getCurrent(payload);
 
     // 2. Charger le customer existant avec owner

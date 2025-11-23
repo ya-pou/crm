@@ -11,6 +11,7 @@ import {
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/roles.guard';
 import { Customer } from 'src/customers/entities/customer.entity';
+import { Opportunity } from 'src/opportunities/entities/opportunity.entity';
 
 export enum Action {
   Manage = 'manage',
@@ -19,7 +20,11 @@ export enum Action {
   Update = 'update',
   Delete = 'delete',
 }
-type Subjects = InferSubjects<typeof User> | typeof Customer | 'all';
+type Subjects =
+  | InferSubjects<typeof User>
+  | typeof Customer
+  | typeof Opportunity
+  | 'all';
 
 export type AppAbility = PureAbility<[Action, Subjects]>;
 
@@ -37,6 +42,8 @@ export class CaslAbilityFactory {
       can(Action.Manage, User);
       // Rules for customers
       can(Action.Manage, Customer);
+      //Rules for opportunities
+      can(Action.Manage, Opportunity);
 
       return build({
         detectSubjectType: (item) =>
@@ -60,6 +67,11 @@ export class CaslAbilityFactory {
       can(Action.Create, Customer);
       can(Action.Read, Customer);
       can(Action.Update, Customer, { userId: user.id });
+
+      //Rules for opportunities
+      can(Action.Create, Opportunity);
+      can(Action.Read, Opportunity);
+      can(Action.Update, Opportunity, { userId: user.id });
 
       return build({
         detectSubjectType: (item) =>
@@ -86,7 +98,14 @@ export class CaslAbilityFactory {
       cannot(Action.Create, User);
 
       //Rules for customers
+      can(Action.Read, Customer);
       can(Action.Update, Customer, { userId: user.id });
+      can(Action.Create, Customer);
+
+      //Rules for opportunities
+      can(Action.Read, Opportunity);
+      can(Action.Create, Opportunity);
+      can(Action.Update, Opportunity, { userId: user.id });
 
       return build({
         detectSubjectType: (item) =>
