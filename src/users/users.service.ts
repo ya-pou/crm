@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 import { Role } from 'src/roles/roles.guard';
+import { Payload } from 'src/auth/auth.service';
 
 @Injectable()
 export class UsersService {
@@ -20,7 +21,7 @@ export class UsersService {
     private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
-  async create(createUserDto: CreateUserDto, payload: User): Promise<any> {
+  async create(createUserDto: CreateUserDto, payload: Payload): Promise<User> {
     const currentUser = await this.getCurrent(payload);
 
     //Un manager ne peut créer que des users et pour lui (managerId)
@@ -45,12 +46,44 @@ export class UsersService {
     return await this.userRepository.save(newUser);
   }
 
-  async findAll() {
-    return await this.userRepository.find();
+  async findAll(payload: Payload) {
+    const currentUser = await this.getCurrent(payload);
+    const ability = this.caslAbilityFactory.createForUser(currentUser);
+
+    let users: User[] = [];
+
+    // ADMIN → tout
+    if (currentUser.profil === Role.ADMIN) {
+      users = await this.userRepository.find();
+    }
+
+    // MANAGER → ses users
+    else if (currentUser.profil === Role.MANAGER) {
+      users = await this.userRepository.find({
+        where: [{ managerId: currentUser.id }, { id: currentUser.id }],
+      });
+    }
+
+    // USER → ses collègues (même manager) et son manager
+    else if (currentUser.profil === Role.USER) {
+      if (!currentUser.managerId) {
+        users = [currentUser]; // fallback
+      } else {
+        users = await this.userRepository.find({
+          where: [
+            { managerId: currentUser.managerId },
+            { id: currentUser.managerId },
+          ],
+        });
+      }
+    }
+
+    // Validation CASL élément par élément
+    return users.filter((user) => ability.can(Action.Read, user));
   }
 
-  async findOne(id: number, currentUserPayload: User): Promise<User | null> {
-    const currentUser = await this.getCurrent(currentUserPayload);
+  async findOne(id: number, payload: Payload): Promise<User | null> {
+    const currentUser = await this.getCurrent(payload);
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException();
 
@@ -72,12 +105,8 @@ export class UsersService {
     return user ?? null;
   }
 
-  async update(
-    id: number,
-    updateUserDto: UpdateUserDto,
-    currentUserPayload: any,
-  ) {
-    const currentUser = await this.getCurrent(currentUserPayload);
+  async update(id: number, updateUserDto: UpdateUserDto, payload: Payload) {
+    const currentUser = await this.getCurrent(payload);
     const user = await this.userRepository.findOne({ where: { id } });
     const ability = this.caslAbilityFactory.createForUser(currentUser);
     if (!user) {
@@ -100,7 +129,7 @@ export class UsersService {
   private async getCurrent(user) {
     const current = await this.userRepository.findOne({
       where: { id: user.id },
-      select: { id: true, profil: true },
+      select: { id: true, profil: true, managerId: true },
     });
     if (!current) throw new UnauthorizedException();
     return current;

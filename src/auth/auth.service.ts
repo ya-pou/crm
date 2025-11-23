@@ -4,6 +4,11 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
 
+export type Payload = {
+  email: string;
+  sub: string;
+  profil: string;
+};
 @Injectable()
 export class AuthService {
   constructor(

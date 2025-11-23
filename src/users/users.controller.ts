@@ -15,6 +15,7 @@ import { CheckAbilities } from 'src/casl/check-abilities.decorator';
 import { Action } from 'src/casl/casl-ability.factory';
 import { User } from './entities/user.entity';
 import { CurrentUser } from './current-user.decorator';
+import { Payload } from 'src/auth/auth.service';
 
 @ApiTags('Utilisateurs')
 @ApiBearerAuth('JWT-auth')
@@ -24,15 +25,18 @@ export class UsersController {
 
   @CheckAbilities({ action: Action.Create, subject: User })
   @Post()
-  create(@Body() createUserDto: CreateUserDto, @CurrentUser() payload) {
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @CurrentUser() payload: Payload,
+  ) {
     console.log(payload);
     return this.usersService.create(createUserDto, payload);
   }
 
   @CheckAbilities({ action: Action.Read, subject: User })
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@CurrentUser() payload) {
+    return this.usersService.findAll(payload);
   }
 
   @CheckAbilities({ action: Action.Read, subject: User })
