@@ -71,8 +71,8 @@ export class UsersService {
       } else {
         users = await this.userRepository.find({
           where: [
-            { managerId: currentUser.managerId },
-            { id: currentUser.managerId },
+            { managerId: currentUser.managerId, actif: true },
+            { id: currentUser.managerId, actif: true },
           ],
         });
       }

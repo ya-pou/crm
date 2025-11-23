@@ -68,7 +68,7 @@ export class CaslAbilityFactory {
       can(Action.Update, User, { id: user.id });
       cannot(Action.Create, User);
 
-      can(Action.Read, User, { managerId: user.managerId });
+      can(Action.Read, User, { managerId: user.managerId, actif: true });
       can(Action.Read, User, { id: user.managerId });
 
       return build({
