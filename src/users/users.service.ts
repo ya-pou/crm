@@ -79,6 +79,9 @@ export class UsersService {
     if (!ability.can(Action.Update, user)) {
       throw new ForbiddenException('You cannot read this user.');
     }
+    // On supprime le champ password du DTO s'il existe
+    delete (updateUserDto as any).password;
+
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }
