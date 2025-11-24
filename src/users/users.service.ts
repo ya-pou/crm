@@ -38,20 +38,28 @@ export class UsersService {
     const newUser = this.userRepository.create({
       ...createUserDto,
     });
-    const password = createUserDto.password;
-    const saltOrRounds = 10;
 
-    createUserDto.password = await bcrypt.hash(password, saltOrRounds);
+    const salt = await bcrypt.genSalt();
+    newUser.password = await bcrypt.hash(createUserDto.password, salt);
 
     return await this.userRepository.save(newUser);
   }
 
   async findAll() {
-    return await this.userRepository.find();
+    return this.userRepository
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.manager', 'm')
+      .addSelect('m.id')
+      .addSelect('m.name')
+      .addSelect('m.lastName')
+      .getMany();
   }
 
   async findOne(id: number): Promise<User | null> {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['manager'],
+    });
     if (!user) throw new NotFoundException();
     return user;
   }
