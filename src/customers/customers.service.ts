@@ -22,7 +22,6 @@ export class CustomersService {
     private readonly customerRepo: Repository<Customer>,
 
     @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
     private readonly userService: UsersService,
     private paginationService: PaginationService,
   ) {}

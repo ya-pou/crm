@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -34,7 +35,7 @@ export class CustomersController {
   }
 
   @Get()
-  findAll(@Param() query: PaginationQueryDto) {
+  findAll(@Query() query: PaginationQueryDto) {
     return this.customersService.findAllFiltered(query);
   }
 
