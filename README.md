@@ -16,6 +16,8 @@ Cette API sert de démonstration pour la création d’**applications métier** 
 - 📈 Gestion des opportunités
 - 📘 Documentation Swagger intégrée
 - 🧱 Architecture NestJS modulaire
+- 📄͎ Pagination
+- 🔼 Tri
 
 ---
 
@@ -41,7 +43,9 @@ cd api-light-crm
 npm install
 ```
 
-### 3. Créer un fichier `.env` à la racine :
+### 3. Environnement :
+
+Créer un fichier `.env` à la racine
 
 ```bash
 # Base de données
@@ -67,10 +71,15 @@ npm run start:dev
 
 ## 🔗 Frontend associé
 
-Le frontend Angular (Light CRM UI) est disponible dans un dépôt séparé.
-(Lien ajouté prochainement)
+Frontend Angular :
+https://github.com/ya-pou/frontend-light-crm
 
 ## 📄 Licence
 
 Projet personnel / démonstration.
 Libre d’utilisation pour un usage interne ou éducatif.
+
+## 🤝 Auteur
+
+Développé par **Alexis HAAG**  
+https://webmate-services.com
