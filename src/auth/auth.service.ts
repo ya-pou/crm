@@ -30,7 +30,7 @@ export class AuthService {
 
   async login(user: Partial<User>) {
     const logInUser = await this.validateUser(user.email, user.password);
-    console.log(logInUser);
+
     if (logInUser) {
       const payload = {
         email: logInUser.email,

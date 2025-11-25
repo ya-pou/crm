@@ -23,7 +23,6 @@ import { CaslGuard } from './casl/casl.guard';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {
-        console.log(config.get('database'));
         return config.get('database');
       },
       inject: [ConfigService],
