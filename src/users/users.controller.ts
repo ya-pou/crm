@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,6 +17,7 @@ import { Action } from 'src/casl/casl-ability.factory';
 import { User } from './entities/user.entity';
 import { CurrentUser } from './current-user.decorator';
 import { Payload } from 'src/auth/auth.service';
+import { PaginationQueryDto } from 'src/common/pagination/pagination.dto';
 
 @ApiTags('Utilisateurs')
 @ApiBearerAuth('JWT-auth')
@@ -34,8 +36,8 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

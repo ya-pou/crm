@@ -13,12 +13,14 @@ import * as bcrypt from 'bcrypt';
 import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 import { Role } from 'src/roles/roles.guard';
 import { Payload } from 'src/auth/auth.service';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 //TODO: Gestion du flag actif
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly caslAbilityFactory: CaslAbilityFactory,
+    private pagination: PaginationService,
   ) {}
 
   async create(createUserDto: CreateUserDto, payload: Payload): Promise<User> {
@@ -45,14 +47,20 @@ export class UsersService {
     return await this.userRepository.save(newUser);
   }
 
-  async findAll() {
-    return this.userRepository
+  async findAll(query) {
+    console.log(query);
+    const qb = this.userRepository
       .createQueryBuilder('u')
-      .leftJoinAndSelect('u.manager', 'm')
+      .leftJoin('u.manager', 'm')
       .addSelect('m.id')
       .addSelect('m.name')
-      .addSelect('m.lastName')
-      .getMany();
+      .addSelect('m.lastName');
+
+    return this.pagination.paginate(qb, query, [
+      'u.name',
+      'u.lastName',
+      'u.email',
+    ]);
   }
 
   async findOne(id: number): Promise<User | null> {
