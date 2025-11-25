@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Customer } from './entities/customer.entity';
-import { User } from 'src/users/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Payload } from 'src/auth/auth.service';
@@ -21,7 +20,6 @@ export class CustomersService {
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
 
-    @InjectRepository(User)
     private readonly userService: UsersService,
     private paginationService: PaginationService,
   ) {}

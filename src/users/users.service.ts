@@ -100,7 +100,7 @@ export class UsersService {
     }
   }
 
-  async getCurrent(user) {
+  async getCurrent(user: any) {
     const current = await this.userRepository.findOne({
       where: { id: user.id },
       select: { id: true, profil: true, managerId: true },
