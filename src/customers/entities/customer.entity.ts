@@ -17,6 +17,9 @@ export class Customer {
   @Column({ length: 255, nullable: false })
   name: string;
 
+  @Column({ length: 255, nullable: false })
+  lastName: string;
+
   @Column({ unique: true, nullable: false })
   email: string;
 
