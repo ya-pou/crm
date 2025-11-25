@@ -6,12 +6,14 @@ import { User } from 'src/users/entities/user.entity';
 import { Customer } from './entities/customer.entity';
 import { UsersModule } from 'src/users/users.module';
 import { CaslModule } from 'src/casl/casl.module';
+import { PaginationModule } from 'src/common/pagination/pagination.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Customer, User]),
     UsersModule,
     CaslModule,
+    PaginationModule,
   ],
   controllers: [CustomersController],
   providers: [CustomersService],

@@ -13,6 +13,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Payload } from 'src/auth/auth.service';
 import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/roles/roles.guard';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 
 @Injectable()
 export class CustomersService {
@@ -23,6 +24,7 @@ export class CustomersService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly userService: UsersService,
+    private paginationService: PaginationService,
   ) {}
 
   async create(dto: CreateCustomerDto, payload: Payload): Promise<Customer> {
@@ -78,6 +80,23 @@ export class CustomersService {
       relations: ['user'],
       order: { id: 'DESC' },
     });
+  }
+
+  async findAllFiltered(query) {
+    const qb = this.customerRepo
+      .createQueryBuilder('c')
+      .leftJoin('c.user', 'u')
+      .addSelect('u.id')
+      .addSelect('u.name')
+      .addSelect('u.lastName');
+
+    return await this.paginationService.paginate(qb, query, [
+      'u.name',
+      'u.lastName',
+      'c.name',
+      'c.lastName',
+      'c.email',
+    ]);
   }
 
   async findOne(id: number): Promise<Customer> {

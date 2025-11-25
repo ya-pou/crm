@@ -16,6 +16,7 @@ import { CheckAbilities } from 'src/casl/check-abilities.decorator';
 import { Customer } from './entities/customer.entity';
 import { CurrentUser } from 'src/users/current-user.decorator';
 import { Payload } from 'src/auth/auth.service';
+import { PaginationQueryDto } from 'src/common/pagination/pagination.dto';
 
 @ApiTags('Clients')
 @ApiBearerAuth('JWT-auth')
@@ -33,8 +34,8 @@ export class CustomersController {
   }
 
   @Get()
-  findAll() {
-    return this.customersService.findAll();
+  findAll(@Param() query: PaginationQueryDto) {
+    return this.customersService.findAllFiltered(query);
   }
 
   @Get(':id')

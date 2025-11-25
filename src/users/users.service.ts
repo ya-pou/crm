@@ -48,7 +48,6 @@ export class UsersService {
   }
 
   async findAll(query) {
-    console.log(query);
     const qb = this.userRepository
       .createQueryBuilder('u')
       .leftJoin('u.manager', 'm')
@@ -56,7 +55,7 @@ export class UsersService {
       .addSelect('m.name')
       .addSelect('m.lastName');
 
-    return this.pagination.paginate(qb, query, [
+    return await this.pagination.paginate(qb, query, [
       'u.name',
       'u.lastName',
       'u.email',
